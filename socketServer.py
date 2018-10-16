@@ -1,5 +1,6 @@
 import socket
 import sys
+import pickle
 
 # Create a TCP/IP socket
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -17,8 +18,8 @@ while True:
     try:
         print('client connected:', client_address)
         while True:
-            data = connection.recv(16)
-            print('received {!r}'.format(data))
+            data = connection.recv(200)
+            print('received {!r}'.format(pickle.loads(data)))
             if data:
                 connection.sendall(data)
             else:

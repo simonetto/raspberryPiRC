@@ -1,65 +1,52 @@
 import pygame
 import threading
 from time import sleep
+import time
+from socketClient import SocketClient
 
 
 class Gamepad(threading.Thread):
-    def __init__(self,
-                 up_button,
-                 down_button,
-                 left_button,
-                 right_button,
-                 left_analog,
-                 right_analog):
+    def __init__(self, window):
         threading.Thread.__init__(self)
         self.done = False
-        self.up_button = up_button
-        self.down_button = down_button
-        self.left_button = left_button
-        self.right_button = right_button
-        self.left_analog = left_analog
-        self.right_analog = right_analog
-        self.orig_color = up_button.cget('background')
+        self.window = window
+        self.socket = None
+        self.socket = SocketClient('localhost', 10000, self.window.set_status)
 
     def run(self):
-        pygame.init()
-        pygame.joystick.init()
+        self.socket.connect()
 
-        while self.done == False:
-            pygame.event.get()
-            joystick_count = pygame.joystick.get_count()
+        if self.socket.is_connected:
+            pygame.init()
+            pygame.joystick.init()
 
-            if joystick_count > 0:
-                joystick = pygame.joystick.Joystick(0)
-                joystick.init()
+            while not self.done:
+                pygame.event.get()
+                joystick_count = pygame.joystick.get_count()
 
-                self.update_left(joystick.get_axis(1))
-                self.update_right(joystick.get_axis(3))
-                self.update_camera(joystick.get_hat(0))
+                if joystick_count > 0:
+                    joystick = pygame.joystick.Joystick(0)
+                    joystick.init()
 
-            sleep(0.05)
-        pygame.quit()
+                    self.send_value(Gamepad.sanitize_digital(joystick.get_axis(1)), self.window.update_left_analog)
+                    self.send_value(Gamepad.sanitize_digital(joystick.get_axis(3)), self.window.update_right_analog)
+                    self.send_value(joystick.get_hat(0), self.window.update_digital)
 
-    def update_left(self, value):
-        self.left_analog.set(value * 10)
+                sleep(0.05)
+            pygame.quit()
 
-    def update_right(self, value):
-        self.right_analog.set(value * 10)
+    @staticmethod
+    def sanitize_digital(value):
+        rounded = round(value * -10)
+        if rounded == 1 or rounded == -1:
+            return 0
+        return rounded
 
-    def update_camera(self, value):
-        def paint_buttons(button1, button2, index):
-            if value[index] == 0:
-                button1.configure(bg=self.orig_color)
-                button2.configure(bg=self.orig_color)
-            elif value[index] == -1:
-                button1.configure(bg='cyan')
-                button2.configure(bg=self.orig_color)
-            else:
-                button1.configure(bg=self.orig_color)
-                button2.configure(bg='cyan')
-
-        paint_buttons(self.left_button, self.right_button, 0)
-        paint_buttons(self.down_button, self.up_button, 1)
+    def send_value(self, value, callback):
+        message = [value, int(round(time.time() * 1000))]
+        self.socket.send(message, callback)
 
     def stop(self):
+        self.socket.disconnect()
+        self.window.set_status('Disconnected')
         self.done = True

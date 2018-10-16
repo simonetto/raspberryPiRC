@@ -3,6 +3,7 @@ import tkinter.font as font
 from gamepad import Gamepad
 from time import sleep
 
+TITLE = 'Super RC'
 
 class Window(Frame):
     def __init__(self, root):
@@ -40,24 +41,45 @@ class Window(Frame):
         self.right_button.pack(side=RIGHT, padx=5, pady=5)
 
         # Left analog bar
-        self.left_analog = Scale(left_analog_frame, from_=-10, to=10)
+        self.left_analog = Scale(left_analog_frame, from_=10, to=-10)
         self.left_analog.set(0)
         self.left_analog.pack()
         self.left_analog.place(relx=.5, rely=.5, anchor="c")
 
         # Right analog bar
-        self.right_analog = Scale(right_analog_frame, from_=-10, to=10)
+        self.right_analog = Scale(right_analog_frame, from_=10, to=-10)
         self.right_analog.set(0)
         self.right_analog.pack()
         self.right_analog.place(relx=.5, rely=.5, anchor="c")
 
-        self.gamepad_thread = Gamepad(self.up_button,
-                                      self.down_button,
-                                      self.left_button,
-                                      self.right_button,
-                                      self.left_analog,
-                                      self.right_analog)
+        self.gamepad_thread = Gamepad(self)
+
+        self.orig_color = self.up_button.cget('background')
         self.start_gamepad()
+
+    def update_left_analog(self, value):
+        self.left_analog.set(value)
+
+    def update_right_analog(self, value):
+        self.right_analog.set(value)
+
+    def update_digital(self, value):
+        def paint_buttons(button1, button2, index):
+            if value[index] == 0:
+                button1.configure(bg=self.orig_color)
+                button2.configure(bg=self.orig_color)
+            elif value[index] == -1:
+                button1.configure(bg='cyan')
+                button2.configure(bg=self.orig_color)
+            else:
+                button1.configure(bg=self.orig_color)
+                button2.configure(bg='cyan')
+
+        paint_buttons(self.left_button, self.right_button, 0)
+        paint_buttons(self.down_button, self.up_button, 1)
+
+    def set_status(self, value):
+        self.root.title('{} - {}'.format(TITLE, value))
 
     def on_closing(self):
         self.gamepad_thread.stop()
@@ -80,7 +102,7 @@ def center(win):
 
 def main():
     root = Tk()
-    root.title('Super RC')
+    root.title(TITLE)
     center(root)
     Window(root)
     root.mainloop()
