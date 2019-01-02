@@ -1,3 +1,6 @@
 GPIO
 Pygame
 opencv-python
+pyzmq
+imutils
+numpy

@@ -16,7 +16,7 @@ class Window(Frame):
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
 
         # update video every 15ms
-        self.delay = 15
+        self.delay = 1
 
         top_frame = Frame(root, relief=RAISED, borderwidth=1)
         self.setup_video_frame(top_frame)
@@ -66,20 +66,17 @@ class Window(Frame):
         self.start_gamepad()
 
     def setup_video_frame(self, frame):
-        # webcam source
-        video_source = 0
-        self.video = VideoCapture(video_source)
-        self.canvas = Canvas(frame, width=self.video.width, height=self.video.height)
+        self.video = VideoCapture()
+        self.canvas = Canvas(frame, width=640, height=480)
         self.canvas.pack()
         self.update_video()
 
     def update_video(self):
         # Get a frame from the video source
-        ret, frame = self.video.get_frame()
+        frame = self.video.get_frame()
 
-        if ret:
-            self.photo = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(frame))
-            self.canvas.create_image(0, 0, image=self.photo, anchor=NW)
+        self.photo = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(frame))
+        self.canvas.create_image(0, 0, image=self.photo, anchor=NW)
 
         self.root.after(self.delay, self.update_video)
 
