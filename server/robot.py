@@ -1,22 +1,22 @@
 import time
-from socket_server import SocketServer
-from video_streamer import VideoStreamer
+from control_server import ControlServer
+from video_server import VideoServer
 
 
 def main():
-    socket_thread = SocketServer()
-    video_thread = VideoStreamer()
+    control_thread = ControlServer()
+    video_thread = VideoServer()
     try:
-        socket_thread.start()
+        control_thread.start()
         video_thread.start()
 
         while True:
             time.sleep(0.1)
     except KeyboardInterrupt:
         print('Keyboard interrupt')
-        socket_thread.stop()
+        control_thread.stop()
         video_thread.join()
-        socket_thread.join()
+        control_thread.join()
 
 
 if __name__ == '__main__':

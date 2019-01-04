@@ -7,7 +7,7 @@ PORT = 10000
 IP = '127.0.0.1'
 
 
-class SocketServer(threading.Thread):
+class ControlServer(threading.Thread):
     def __init__(self):
         threading.Thread.__init__(self)
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

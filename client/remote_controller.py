@@ -2,7 +2,7 @@ from tkinter import *
 import tkinter.font as font
 from gamepad import Gamepad
 from time import sleep
-from video_capture import VideoCapture
+from video_client import VideoClient
 
 TITLE = 'Super RC'
 
@@ -60,7 +60,7 @@ class Window(Frame):
         self.start_gamepad()
 
     def setup_video_frame(self):
-        self.video_thread = VideoCapture()
+        self.video_thread = VideoClient()
         self.video_thread.start()
 
     def update_left_analog(self, value):

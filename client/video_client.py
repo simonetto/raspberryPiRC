@@ -7,7 +7,7 @@ from utils import string_to_image
 PORT = '5555'
 
 
-class VideoCapture(threading.Thread):
+class VideoClient(threading.Thread):
     def __init__(self):
         threading.Thread.__init__(self)
         context = zmq.Context()
