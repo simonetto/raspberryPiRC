@@ -3,7 +3,6 @@ import tkinter.font as font
 from gamepad import Gamepad
 from time import sleep
 from video_capture import VideoCapture
-import PIL.Image, PIL.ImageTk
 
 TITLE = 'Super RC'
 
@@ -15,12 +14,7 @@ class Window(Frame):
         self.root = root
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
 
-        # update video every 15ms
-        self.delay = 1
-
-        top_frame = Frame(root, relief=RAISED, borderwidth=1)
-        self.setup_video_frame(top_frame)
-        top_frame.pack(fill=BOTH, expand=True)
+        self.setup_video_frame()
 
         bottom_frame = Frame(root, relief=RAISED, borderwidth=1)
         bottom_frame.pack(fill=BOTH, expand=True)
@@ -65,20 +59,9 @@ class Window(Frame):
         self.orig_color = self.up_button.cget('background')
         self.start_gamepad()
 
-    def setup_video_frame(self, frame):
-        self.video = VideoCapture()
-        self.canvas = Canvas(frame, width=640, height=480)
-        self.canvas.pack()
-        self.update_video()
-
-    def update_video(self):
-        # Get a frame from the video source
-        frame = self.video.get_frame()
-
-        self.photo = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(frame))
-        self.canvas.create_image(0, 0, image=self.photo, anchor=NW)
-
-        self.root.after(self.delay, self.update_video)
+    def setup_video_frame(self):
+        self.video_thread = VideoCapture()
+        self.video_thread.start()
 
     def update_left_analog(self, value):
         self.left_analog.set(value)
@@ -107,6 +90,8 @@ class Window(Frame):
     def on_closing(self):
         self.gamepad_thread.stop()
         self.gamepad_thread.join()
+        self.video_thread.stop()
+        self.video_thread.join()
         sleep(1)
         self.root.destroy()
 
@@ -116,9 +101,9 @@ class Window(Frame):
 
 def center(win):
     win.update_idletasks()
-    width = 700
-    height = 800
-    x = (win.winfo_screenwidth() // 2) - (width // 2)
+    width = 600
+    height = 300
+    x = (win.winfo_screenwidth() // 2) - (width // 8)
     y = (win.winfo_screenheight() // 2) - (height // 2) - 50
     win.geometry('{}x{}+{}+{}'.format(width, height, x, y))
 
