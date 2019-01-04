@@ -2,7 +2,6 @@ import cv2
 import numpy as np
 import threading
 import zmq
-from utils import string_to_image
 
 PORT = '5555'
 
@@ -21,9 +20,18 @@ class VideoClient(threading.Thread):
         self.keep_running = True
         while self.footage_socket and self.keep_running:
             frame = self.footage_socket.recv_string()
-            self.current_frame = string_to_image(frame)
+            self.current_frame = self.string_to_image(frame)
             cv2.imshow('Stream', self.current_frame)
             cv2.waitKey(1)
+
+    @staticmethod
+    def string_to_image(string):
+        import numpy as np
+        import cv2
+        import base64
+        img = base64.b64decode(string)
+        npimg = np.fromstring(img, dtype=np.uint8)
+        return cv2.imdecode(npimg, 1)
 
     def stop(self):
         self.keep_running = False

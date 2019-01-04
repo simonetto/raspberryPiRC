@@ -1,45 +1,36 @@
-import threading
-import socket
-import sys
 import cv2
-import pickle
-import struct
-
-HOST = ''
-PORT = 8089
+import zmq
+import threading
+from camera import Camera
+from constants import PORT, SERVER_ADDRESS
+from utils import image_to_string
 
 
 class VideoServer(threading.Thread):
     def __init__(self):
         threading.Thread.__init__(self)
-        print('streaming')
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        print('Socket created')
+        context = zmq.Context()
+        self.footage_socket = context.socket(zmq.PUB)
+        self.footage_socket.connect('tcp://' + SERVER_ADDRESS + ':' + PORT)
+        self.keep_running = True
+        self.camera = Camera()
 
-        s.bind((HOST, PORT))
-        print('Socket bind complete')
+    def run(self):
+        print('Streaming Started...')
+        self.camera.start_capture()
+        self.keep_running = True
 
-        s.listen(10)
-        print('Socket now listening')
+        while self.footage_socket and self.keep_running:
+            try:
+                frame = self.camera.current_frame.read()
+                image_as_string = image_to_string(frame)
+                self.footage_socket.send(image_as_string)
+            except zmq.error.ZMQError:
+                self.stop()
 
-        conn, addr = s.accept()
+        cv2.destroyAllWindows()
 
-        ### new
-        data = ""
-        payload_size = struct.calcsize("H")
-        while True:
-            while len(data) < payload_size:
-                data += conn.recv(4096)
-            packed_msg_size = data[:payload_size]
-            data = data[payload_size:]
-            msg_size = struct.unpack("H", packed_msg_size)[0]
-            while len(data) < msg_size:
-                data += conn.recv(4096)
-            frame_data = data[:msg_size]
-            data = data[msg_size:]
-            ###
-
-            frame = pickle.loads(frame_data)
-            print(frame)
-            cv2.imshow('frame', frame)
-
+    def stop(self):
+        self.keep_running = False
+        self.footage_socket.close()
+        print('Video socket stopped')

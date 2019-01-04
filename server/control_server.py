@@ -8,8 +8,9 @@ IP = '127.0.0.1'
 
 
 class ControlServer(threading.Thread):
-    def __init__(self):
+    def __init__(self, video_server):
         threading.Thread.__init__(self)
+        self.video_server = video_server
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server_address = (IP, PORT)
         print('starting up on {} port {}'.format(*self.server_address))
@@ -38,7 +39,10 @@ class ControlServer(threading.Thread):
                             else:
                                 break
                         else:
-                            connection.close()
+                            self.stop()
+                            self.video_server.stop()
+                except EOFError:
+                    print('client disconnected')
                 finally:
                     connection.close()
         except OSError:
